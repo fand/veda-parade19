@@ -1,15 +1,16 @@
 /*{
-  midi: true,
+  osc: 3333,
 }*/
 precision mediump float;
 uniform vec2  resolution;
 uniform float time;
 uniform float volume;
-uniform sampler2D midi;
 uniform sampler2D mem;
+uniform sampler2D osc_cc;
+uniform sampler2D osc_note;
 
-float cc(in float c) {
-  return texture2D(midi, vec2(176. / 256., c / 128.)).x * 2.;
+float osc(in float ch) {
+  return texture2D(osc_note, vec2(ch / 64.)).r;
 }
 
 void main() {
@@ -17,14 +18,22 @@ void main() {
 
   vec4 acc = texture2D(mem, vec2(0));
   float deltaTime = time - acc.x;
-  float ratio = cc(23.) * 10. + 1.;
+
+  float lim = 20.;
+
+  float accel = acc.z;
+  if (osc(63.) > 0.) {
+    accel = (lim - accel) * 0.9 + 1.;
+  } else {
+    accel = (accel - 1.) * 0.2 + 1.;
+    // accel = 1.;
+  }
+  accel = clamp(accel, 1., lim);
 
   gl_FragColor = vec4(
     time, // absTime
-    acc.y + deltaTime * ratio, // accTime
-    cc(23.), // for debug
-    0
+    acc.y + deltaTime * accel, // accTime
+    accel,
+    acc.w + volume * accel // accVolume
   );
-
-  // gl_FragColor = fract(gl_FragColor);
 }

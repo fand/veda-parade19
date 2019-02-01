@@ -1,5 +1,5 @@
 /*{
-  pixelRatio: 2,
+  pixelRatio: 3,
   camera: true,
   audio: true,
   midi: true,
@@ -36,6 +36,7 @@ uniform int PASSINDEX;
 #pragma glslify: noise3 = require('glsl-noise/simplex/3d')
 #pragma glslify: import('./utils/utils')
 #pragma glslify: import('./utils/post')
+#define SQRT3 1.7320508
 
 vec2 scale(in vec2 st, in float r) {
   return (st - .5) * r + .5;
@@ -136,18 +137,22 @@ vec4 post(in vec4 c) {
 
   // glichy noise
   float oscrgb = osc(2.);
-  c.r += step(.99, blockNoise(uv *1.7, fract(time * .1)) * oscrgb);
-  c.gb += step(.99, blockNoise(uv *2.4, fract(time * .1)) *oscrgb);
+  if (oscrgb > 0.) {
+    c.r += step(.99, blockNoise(uv *1.7, fract(time * .1 * oscrgb)));
+    c.gb += step(.99, blockNoise(uv *2.4, fract(time * .1 * oscrgb)));
+  }
 
   // mosh
   float oscmosh = osc(3.);
-  float nx = blockNoise(uv * 2.7, fract(time * .1)) *.1;
-  float ny = blockNoise(uv * 1.8, fract(time * .2)) *.1;
-  c.rgb = mix(c.rgb, vec3(
-    c.r * oscmosh / texture2D(renderBuffer, fract(uv + vec2(nx, ny) + .01)).b,
-    c.g * oscmosh / texture2D(renderBuffer, fract(uv + vec2(nx, ny) + .03)).b,
-    c.b / texture2D(renderBuffer, fract(uv + vec2(nx, ny) + .01)).r
-  ), oscmosh * 2.);
+  if (oscmosh > 0.) {
+    float nx = blockNoise(uv * 2.7, fract(time * .1)) *.1;
+    float ny = blockNoise(uv * 1.8, fract(time * .2)) *.1;
+    c.rgb = mix(c.rgb, vec3(
+      c.r * oscmosh / texture2D(renderBuffer, fract(uv + vec2(nx, ny) + .01)).b,
+      c.g * oscmosh / texture2D(renderBuffer, fract(uv + vec2(nx, ny) + .03)).b,
+      c.b / texture2D(renderBuffer, fract(uv + vec2(nx, ny) + .01)).r
+    ), oscmosh * 2.);
+  }
 
   // c = vec4(step(0.05, fwidth(c.r))); // edge
 
@@ -179,10 +184,100 @@ vec4 post(in vec4 c) {
   return c;
 }
 
+
+vec2 hexCenter(in vec2 p) {
+    mat2 skew = mat2(1. / 1.1457, 0, 0.5, 1);
+    mat2 inv = 2. * mat2(1., 0, -0.5, 1. / 1.1457);
+
+    vec2 cellP = skew * p;
+
+    // Decide which lane the cell is in
+    vec2 cellOrigin = floor(cellP); // -10 to 10, skewed
+    float celltype = mod(cellOrigin.x + cellOrigin.y, 3.0);
+    vec2 cellCenter = cellOrigin; // -10 to -10, skewed
+
+    if (celltype < 1.) {
+        // do nothing
+    }
+    else if (celltype < 2.) {
+        cellCenter = cellOrigin + 1.;
+    }
+    else if (celltype < 3.) {
+        cellP = fract(cellP);
+        if (cellP.x > cellP.y) {
+            cellCenter = cellOrigin + vec2(1, 0);
+        }
+        else {
+            cellCenter = cellOrigin + vec2(0, 1);
+        }
+    }
+
+    return inv * (cellCenter / SQRT3);
+}
+
+float hexLine(in vec2 p, in float width) {
+    p = abs(p);
+
+    if (p.y < p.x * SQRT3) {
+        p = rot(p, -1.06);
+    }
+
+    return smoothstep(1. - width, 1. - width + .05, p.y) * smoothstep(1., .95, p.y);
+}
+
+vec2 hexP(in vec2 p) {
+  vec2 hc = hexCenter(p);
+  return p - hc;
+}
+
+float hex(in vec2 p) {
+  vec2 hc = hexCenter(p);
+  vec2 hp = p - hc;
+
+  float n = noise2(hc);
+  float r = fract(-time * .3 + n);
+
+  float a = atan(hp.y, hp.x);
+
+  return hexLine(hp * r, .1);
+}
+
+float orb(vec2 p, vec2 c) {
+  return .1 / length(p - c);
+}
+
 vec4 draw(in vec2 uv) {
-  vec4 c1 = texture2D(v1, uv);
-  vec4 c2 = texture2D(v2, uv);
-  return c1 + c2;
+  vec2 p = uv * 2. - 1.;
+  p.x *= resolution.x / resolution.y;
+
+  // float v = volume;
+  float vv = volume * 0.01;
+
+  vec4 c = vec4(0);
+
+  c += orb(p * .3, vec2(0)) * vv;
+
+  // p = hexP(p * 2.);
+
+  // lisajou
+  // for (int i = 0; i < 3; i++) {
+  //   float fi = float(i) + t() * 0.3;
+  //   c += orb(p, vec2(sin(fi * 3.), cos(fi * 7.))) * vv;
+  //   c.b += orb(p +0.001, vec2(sin(fi * 3.), cos(fi * 7.))) * vv;
+  // }
+
+  // orbits
+  // for (int i = 0; i < 20; i++) {
+  //   float fi = float(i) + 3.;
+  //   fi = pow(fi / 23., 4.);
+  //   float r = pow(1. - fi, 2.) * 2.;
+  //   float an = sin(.8 / r) * 2. * time;
+  //   c += orb(p, vec2(sin(an), cos(an)) * r) * vv;
+  // }
+
+  // c += hex(p *2.);
+
+  return c;
 }
 
 void main() {
@@ -193,6 +288,7 @@ void main() {
   }
   else if (PASSINDEX == 2) {
     vec4 c = texture2D(renderBuffer, uv);
+    // gl_FragColor = c;
     gl_FragColor = post(c);
   }
 }

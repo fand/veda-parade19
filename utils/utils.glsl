@@ -13,6 +13,10 @@ float t() {
   return texture2D(mem, vec2(0)).y;
 }
 
+float vol() {
+  return texture2D(mem, vec2(0)).w;
+}
+
 vec3 rep(in vec3 p, in float unit) {
   p = mod(p, unit * 2.) - unit;
   p /= unit;
