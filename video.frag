@@ -151,7 +151,7 @@ vec4 post(in vec4 c) {
       c.r * oscmosh / texture2D(renderBuffer, fract(uv + vec2(nx, ny) + .01)).b,
       c.g * oscmosh / texture2D(renderBuffer, fract(uv + vec2(nx, ny) + .03)).b,
       c.b / texture2D(renderBuffer, fract(uv + vec2(nx, ny) + .01)).r
-    ), oscmosh * .3);
+    ), oscmosh * .2);
   }
 
   // c = vec4(step(0.05, fwidth(c.r))); // edge
@@ -290,11 +290,11 @@ vec4 draw(in vec2 uv) {
   }
 
   // float v = volume;
-  float vv = volume * 0.01;
+  float vv = volume * .03;
 
   vec4 c = vec4(0);
 
-  c += orb(p * .3, vec2(0)) * vv * .5;
+  // c += orb(p * .3, vec2(0)) * vv * .5;
 
   if (osc(58.) > .0) {
     p = hexP(p * 2.);
@@ -330,16 +330,16 @@ vec4 draw(in vec2 uv) {
   // plasma
   if (osc(51.) > .0) {
     // c += .3/cos(p.x * 3.2 + sin(p.y * .93 + time * .2) + time) * sin(p.y * 2.3 + p.x* 4.1 +time * .3) * cos(p.y * 3.+ p.x * .7);
-    c += cos(p.x * 13.2 + time) * sin(p.y * 12.3 -time * .7);
+    c.r -= cos(p.x * 13.2 + time) * sin(p.y * 12.3 -time * .7) *  .3;
   }
 
   // hex eyes
   c += hex(p *4.) * osc(56.) * 2.;
-  c += hex(p *7.1 +.3) * osc(56.) * 2.;
+  c += hex(p *8.) * osc(56.) * 2.;
 
   // hex lines
   c += drawHex(p * 4.) * osc(57.) * 2.;
-  c += drawHex(p * 7.1 + .3) * osc(57.) * 2.;
+  c += drawHex(p * 8.) * osc(57.) * 2.;
 
   return c;
 }
