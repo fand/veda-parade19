@@ -1,5 +1,5 @@
 /*{
-  pixelRatio: 3,
+  pixelRatio: 1,
   camera: true,
   audio: true,
   midi: true,
@@ -151,7 +151,7 @@ vec4 post(in vec4 c) {
       c.r * oscmosh / texture2D(renderBuffer, fract(uv + vec2(nx, ny) + .01)).b,
       c.g * oscmosh / texture2D(renderBuffer, fract(uv + vec2(nx, ny) + .03)).b,
       c.b / texture2D(renderBuffer, fract(uv + vec2(nx, ny) + .01)).r
-    ), oscmosh * 2.);
+    ), oscmosh * .3);
   }
 
   // c = vec4(step(0.05, fwidth(c.r))); // edge
@@ -246,6 +246,35 @@ float orb(vec2 p, vec2 c) {
   return .1 / length(p - c);
 }
 
+float drawLis(vec2 p, int i) {
+  float fi = float(i) + t() * 0.3;
+  return orb(p, vec2(sin(fi * 3.), cos(fi * 7.)));
+}
+
+float drawOrbit(vec2 p, int i, float offset) {
+  float fi = float(i) + 3.;
+  // fi = pow(fi / 23., 4.);
+  float r = fi + offset;
+  float an = sin(1. / r) * 5. * t();
+  return orb(p, vec2(sin(an), cos(an)) * r);
+}
+
+float drawFall(vec2 p, int i) {
+  float fi = float(i);
+  float x = fract(fi * 0.87 +.5) * 2. - 1.;
+  float yt = fract(sin(fi) + time);
+  float y = exp(yt *-5.) * 3. - 1.5;
+
+  return orb(p, vec2(x * 3., y));
+}
+
+float drawHex(vec2 p) {
+  vec2 hc2 = hexCenter(p);
+  vec2 p2 = hc2 - p;
+  float n2 = noise2(hc2 +t() * 0.3);
+  return step(.3, sin(p2.y * 3. + t()) * n2);
+}
+
 vec4 draw(in vec2 uv) {
   vec2 p = uv * 2. - 1.;
   p.x *= resolution.x / resolution.y;
@@ -257,25 +286,41 @@ vec4 draw(in vec2 uv) {
 
   c += orb(p * .3, vec2(0)) * vv;
 
-  // p = hexP(p * 2.);
-
-  // lisajou
-  // for (int i = 0; i < 3; i++) {
-  //   float fi = float(i) + t() * 0.3;
-  //   c += orb(p, vec2(sin(fi * 3.), cos(fi * 7.))) * vv;
-  //   c.b += orb(p +0.001, vec2(sin(fi * 3.), cos(fi * 7.))) * vv;
-  // }
+  if (osc(58.) > .0) {
+    p = hexP(p * 2.);
+  }
 
   // orbits
-  // for (int i = 0; i < 20; i++) {
-  //   float fi = float(i) + 3.;
-  //   fi = pow(fi / 23., 4.);
-  //   float r = pow(1. - fi, 2.) * 2.;
-  //   float an = sin(.8 / r) * 2. * time;
-  //   c += orb(p, vec2(sin(an), cos(an)) * r) * vv;
-  // }
+  if (osc(48.) > .0) {
+    for (int i = 0; i < 3; i++) {
+      c += drawOrbit(p * 10., i, .3) * 2.;
+    }
+  }
 
-  // c += hex(p *2.);
+  // lisajou
+  if (osc(49.) > .0) {
+    for (int i = 0; i < 6; i++) {
+      c += drawLis(p, i) * vv;
+    }
+  }
+
+  // falls
+  if (osc(50.) > .0) {
+    for (int i = 0; i < 1; i++) {
+      c += drawFall(p, i) * .8;
+    }
+  }
+
+  // plasma
+  if (osc(51.) > .0) {
+
+  }
+
+  // hex eyes
+  c += hex(p *2.) * osc(56.) * 2.;
+
+  // hex lines
+  c += drawHex(p * 2.) * osc(57.) * 2.;
 
   return c;
 }
@@ -284,7 +329,13 @@ void main() {
   vec2 uv = gl_FragCoord.xy / resolution;
   if (PASSINDEX == 1)  {
     uv = pre(uv);
-    gl_FragColor = draw(uv);
+    // gl_FragColor = draw(uv);
+    gl_FragColor = vec4(
+      draw(uv + vec2(.001, 0)).r,
+      draw((uv - .5) * .98 +.5).r,
+      draw((uv - .5) * .96 +.501).r,
+      1.
+    );
   }
   else if (PASSINDEX == 2) {
     vec4 c = texture2D(renderBuffer, uv);
