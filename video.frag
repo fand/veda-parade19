@@ -254,7 +254,8 @@ float drawLis(vec2 p, int i) {
 float drawOrbit(vec2 p, int i, float offset) {
   float fi = float(i) + 3.;
   // fi = pow(fi / 23., 4.);
-  float r = fi + offset;
+  float r = fi + offset + sin(fi + time * .003) * .1;
+
   float an = sin(1. / r) * 5. * t();
   return orb(p, vec2(sin(an), cos(an)) * r);
 }
@@ -271,20 +272,29 @@ float drawFall(vec2 p, int i) {
 float drawHex(vec2 p) {
   vec2 hc2 = hexCenter(p);
   vec2 p2 = hc2 - p;
-  float n2 = noise2(hc2 +t() * 0.3);
-  return step(.3, sin(p2.y * 3. + t()) * n2);
+  float n2 = noise2(hc2);
+  p2 = rot(p2, n2 * 7.);
+  p2 *= p2;
+  return step(.3, sin(p2.y * 7. + t()) * n2);
 }
 
 vec4 draw(in vec2 uv) {
   vec2 p = uv * 2. - 1.;
   p.x *= resolution.x / resolution.y;
 
+  // p.x += noise2(floor(p.yy * 32. + time * .2)) * .08;
+
+  if (osc(59.) > .0) {
+    p *= p;
+    p = rot(p, time * .2);
+  }
+
   // float v = volume;
   float vv = volume * 0.01;
 
   vec4 c = vec4(0);
 
-  c += orb(p * .3, vec2(0)) * vv;
+  c += orb(p * .3, vec2(0)) * vv * .5;
 
   if (osc(58.) > .0) {
     p = hexP(p * 2.);
@@ -292,35 +302,44 @@ vec4 draw(in vec2 uv) {
 
   // orbits
   if (osc(48.) > .0) {
-    for (int i = 0; i < 3; i++) {
-      c += drawOrbit(p * 10., i, .3) * 2.;
+    for (int i = 0; i < 9; i++) {
+      float size = 1. +noise2(vec2(time, float(i))) * 3.;
+      c += drawOrbit(p * 10. * (1. - vv), i, .3) * 1.8 * vv * size;
     }
   }
 
   // lisajou
   if (osc(49.) > .0) {
     for (int i = 0; i < 6; i++) {
-      c += drawLis(p, i) * vv;
+      c += drawLis(p, i) * vv * .5;
     }
   }
 
+  float l = length(p);
+  float al = l * .7 +.3;
+  p = rot(p, al);
+  // p *= .3;
+
   // falls
   if (osc(50.) > .0) {
-    for (int i = 0; i < 1; i++) {
-      c += drawFall(p, i) * .8;
+    for (int i = 0; i < 30; i++) {
+      c += drawFall(p * 1.3, i) * .4 * vv;
     }
   }
 
   // plasma
   if (osc(51.) > .0) {
-
+    // c += .3/cos(p.x * 3.2 + sin(p.y * .93 + time * .2) + time) * sin(p.y * 2.3 + p.x* 4.1 +time * .3) * cos(p.y * 3.+ p.x * .7);
+    c += cos(p.x * 13.2 + time) * sin(p.y * 12.3 -time * .7);
   }
 
   // hex eyes
-  c += hex(p *2.) * osc(56.) * 2.;
+  c += hex(p *4.) * osc(56.) * 2.;
+  c += hex(p *7.1 +.3) * osc(56.) * 2.;
 
   // hex lines
-  c += drawHex(p * 2.) * osc(57.) * 2.;
+  c += drawHex(p * 4.) * osc(57.) * 2.;
+  c += drawHex(p * 7.1 + .3) * osc(57.) * 2.;
 
   return c;
 }
