@@ -235,7 +235,7 @@ float hex(in vec2 p) {
   vec2 hp = p - hc;
 
   float n = noise2(hc);
-  float r = fract(-time * .3 + n);
+  float r = fract(-time * PI / 6. + n); // 15sec
 
   float a = atan(hp.y, hp.x);
 
@@ -275,7 +275,7 @@ float drawHex(vec2 p) {
   float n2 = noise2(hc2);
   p2 = rot(p2, n2 * 7.);
   p2 *= p2;
-  return step(.3, sin(p2.y * 7. + t()) * n2);
+  return step(.3, sin(p2.y * 7. + t() * PI / 3.) * n2); // 6sec
 }
 
 vec4 draw(in vec2 uv) {
@@ -335,7 +335,7 @@ vec4 draw(in vec2 uv) {
 
   // hex eyes
   c += hex(p *4.) * osc(56.) * 2.;
-  c += hex(p *8.) * osc(56.) * 2.;
+  c += hex(p *12.) * osc(56.) * 2. * l;
 
   // hex lines
   c += drawHex(p * 4.) * osc(57.) * 2.;

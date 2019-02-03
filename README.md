@@ -1,28 +1,20 @@
-# VEDA-InfiniteRave
+# VEDA-parade19
 
-VJ set for [InfiniteRave](https://1nfiniterave.peatix.com/) on 2018-09-16.
+VJ set for [Parade 19](http://shikanjima-port.jp/event_detail.php?id=117) on 2019-02-02.
 
-![default](https://user-images.githubusercontent.com/1403842/45741202-fb47b480-bc31-11e8-9f7d-91e89d7513df.PNG)
-
+<img width="1920" alt="2019-02-02 22 11 29" src="https://user-images.githubusercontent.com/1403842/52173433-1d4c6880-27c8-11e9-9471-2be7e21bd298.png">
+<img width="1920" alt="2019-02-02 22 08 07" src="https://user-images.githubusercontent.com/1403842/52173436-26d5d080-27c8-11e9-8d9c-10bd943def35.png">
 
 ## How to run
 
 ```sh
-$ git clone https://github.com/fand/veda-infiniterave
-$ cd veda-infiniterave
+$ git clone https://github.com/fand/veda-parade19
+$ cd veda-parade19
 $ npm install  # Required to use glslify modules
 $ atom .
 ```
 
 then run VEDA on Atom!
-
-
-## Examples
-
-![f56288b1-194c-0ea6-42d1-0b92272ecc5c](https://user-images.githubusercontent.com/1403842/45740491-5e384c00-bc30-11e8-88df-cf5b54238e23.gif)
-![ezgif-5-0de457786f](https://user-images.githubusercontent.com/1403842/45741132-cd627000-bc31-11e8-8e27-3d41169f5acf.gif)
-![a41ec79f-e887-4fc4-f50d-a6741b4fb2c7](https://user-images.githubusercontent.com/1403842/45740474-52e52080-bc30-11e8-979a-c0987a4a58db.gif)
-
 
 ## License
 
