@@ -6,9 +6,10 @@
   glslify: true,
   osc: 3333,
   "IMPORTED": {
-    v1: { PATH: "./vj/beeple/beeple00173.mp4" },
-    v2: { PATH: "./vj/tatsuya/tatsuya00087.mov" },
-    v3: { PATH: "./vj/beeple/beeple0016(4.mp4" },
+    v1: { PATH: "./vj/beeple/beeple00020.mp4" },
+    // v2: { PATH: "./vj/tatsuya/tatsuya00033.mov" },
+    v2: { PATH: "./vj/beeple/beeple00099.mp4" },
+    v3: { PATH: "./vj/beeple/beeple00164.mp4" },
   },
   PASSES: [
     { fs: "mem.frag", TARGET: "mem", FLOAT: true },
@@ -131,6 +132,8 @@ vec2 pre(in vec2 uv) {
   return uv;
 }
 
+vec2 hexCenter(in vec2 p);
+
 vec4 post(in vec4 c) {
   vec2 uv = gl_FragCoord.xy / resolution;
   vec2 p = (gl_FragCoord.xy * 2. - resolution) / min(resolution.x, resolution.y);
@@ -181,9 +184,29 @@ vec4 post(in vec4 c) {
     c.r = texture2D(renderBuffer, fract(uv + vec2(sin(time * 30.) * sin(time * 183.) * sin(time * 73.) * .1, 0) + .01)).g;
   }
 
+  // pixelsort
+  if (texture2D(renderBuffer, floor(uv * 320.) / 320.).g > .5) {
+    vec3 x = vec3(.0);///texture2D(renderBuffer, fract(uv)).rgb;
+    // vec2 du = rot(vec2(1, 0), noise2(floor(uv * 3.)) * 10.);
+    float nh = noise2(hexCenter(p * 1.5) + time *.04);
+    vec2 du = rot(vec2(1, 0), nh * 10.);
+
+    // float xi = mod(uv.x * resolution.x, 700.) / 700.;
+    float xi = uv.x;
+    for (int i = 0; i < 200; i++) {
+      float fi = float(i) * nh * 5.;
+      // vec3 r = texture2D(renderBuffer, uv + vec2(fi / resolution.x, 0)).rgb;
+      vec3 r = texture2D(renderBuffer, fract(uv + du * (fi / resolution.x))).rgb;
+      if (abs(length(r) - xi) < .03) {
+        x = r;
+        break;
+      }
+    }
+    c.rgb = x.grb *3.;
+  }
+
   return c;
 }
-
 
 vec2 hexCenter(in vec2 p) {
     mat2 skew = mat2(1. / 1.1457, 0, 0.5, 1);
@@ -341,6 +364,10 @@ vec4 draw(in vec2 uv) {
   c += drawHex(p * 4.) * osc(57.) * 2.;
   c += drawHex(p * 8.) * osc(57.) * 2.;
 
+  c+= texture2D(v1, uv) +texture2D(v2, uv);
+
+
+
   return c;
 }
 
@@ -348,13 +375,13 @@ void main() {
   vec2 uv = gl_FragCoord.xy / resolution;
   if (PASSINDEX == 1)  {
     uv = pre(uv);
-    // gl_FragColor = draw(uv);
-    gl_FragColor = vec4(
-      draw(uv + vec2(.001, 0)).r,
-      draw((uv - .5) * .98 +.5).r,
-      draw((uv - .5) * .96 +.501).r,
-      1.
-    );
+    gl_FragColor = draw(uv);
+    // gl_FragColor = vec4(
+    //   draw(uv + vec2(.001, 0)).r,
+    //   draw((uv - .5) * .98 +.5).r,
+    //   draw((uv - .5) * .96 +.501).r,
+    //   1.
+    // );
   }
   else if (PASSINDEX == 2) {
     vec4 c = texture2D(renderBuffer, uv);
